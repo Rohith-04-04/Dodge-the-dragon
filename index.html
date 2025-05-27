@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dodge the Dragons!</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: rgb(4, 4, 4);
+      font-family: sans-serif;
+      color: rgb(6, 6, 1);
+      text-align: center;
+    }
+
+    #game {
+      position: relative;
+      width: 800px;
+      height: 600px;
+      margin: 20px auto;
+      background-color: #0b0b0b;
+      border: 2px solid rgb(5, 5, 5);
+      overflow: hidden;
+    }
+
+    #player {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      bottom: 0;
+    }
+
+    .enemy {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+    }
+
+    #score {
+      font-size: 24px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dodge the Dragons!</h1>
+  <div id="score">Score: 0</div>
+  <div id="game">
+    <img id="player" src="player.png" alt="Player" />
+  </div>
+
+  <!-- Sounds -->
+  <audio id="gameOverSound" src="game-over-31-179699.mp3"></audio>
+  <audio id="bgMusic" src="epic-uplifting-cinematic-music-348677.mp3" loop></audio>
+
+  <script>
+    const game = document.getElementById('game');
+    const player = document.getElementById('player');
+    const playerSize = 50;
+    const gameWidth = 800;
+    const gameHeight = 600;
+    let playerX = gameWidth / 2 - playerSize / 2;
+    let score = 0;
+    let speed = 5;
+    let enemies = [];
+    let gameOver = false;
+
+    const gameOverSound = document.getElementById('gameOverSound');
+    const bgMusic = document.getElementById('bgMusic');
+
+    // Play background music when the game starts
+    window.addEventListener('load', () => {
+      bgMusic.play().catch(() => {
+        // Fallback in case browser blocks autoplay; music will play on user interaction
+        document.addEventListener('keydown', () => {
+          bgMusic.play();
+        }, { once: true });
+      });
+    });
+
+    player.style.left = playerX + 'px';
+
+    function updateScore() {
+      document.getElementById('score').textContent = 'Score: ' + score;
+      // No score sound; only background music continues
+    }
+
+    function setSpeed(score) {
+      if (score < 20) return 5;
+      if (score < 40) return 8;
+      if (score < 60) return 12;
+      return 15;
+    }
+
+    function createEnemy() {
+      const enemy = document.createElement('img');
+      enemy.src = 'Dragon.jpg';
+      enemy.classList.add('enemy');
+      enemy.style.left = Math.floor(Math.random() * (gameWidth - playerSize)) + 'px';
+      enemy.style.top = '0px';
+      game.appendChild(enemy);
+      enemies.push(enemy);
+    }
+
+    function moveEnemies() {
+      enemies.forEach((enemy, index) => {
+        let top = parseInt(enemy.style.top);
+        top += speed;
+        if (top > gameHeight) {
+          game.removeChild(enemy);
+          enemies.splice(index, 1);
+          score++;
+          updateScore();
+          speed = setSpeed(score);
+        } else {
+          enemy.style.top = top + 'px';
+
+          const eX = parseInt(enemy.style.left);
+          const eY = top;
+
+          if (
+            eX < playerX + playerSize &&
+            eX + playerSize > playerX &&
+            eY < gameHeight &&
+            eY + playerSize > gameHeight - playerSize
+          ) {
+            endGame();
+          }
+        }
+      });
+    }
+
+    function endGame() {
+      gameOver = true;
+      bgMusic.pause(); // Stop background music on game over
+      bgMusic.currentTime = 0;
+      gameOverSound.play();
+      setTimeout(() => {
+        alert('Game Over! Your Score: ' + score);
+        location.reload();
+      }, 200);
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' && playerX > 0) {
+        playerX -= playerSize;
+      } else if (e.key === 'ArrowRight' && playerX < gameWidth - playerSize) {
+        playerX += playerSize;
+      }
+      player.style.left = playerX + 'px';
+    });
+
+    setInterval(() => {
+      if (gameOver) return;
+      moveEnemies();
+      if (Math.random() < 0.1 && enemies.length < 10) {
+        createEnemy();
+      }
+    }, 30);
+  </script>
+</body>
+</html>
